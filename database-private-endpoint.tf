@@ -4,7 +4,7 @@
 
 # Create Private DNS Zone Virtual Network Link for PostgreSQL
 resource "azurerm_private_dns_zone_virtual_network_link" "pe" {
-  name = "${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}-pe-vnet-link"
+  name = "pe-vnet-link-${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}"
   # resource_group_name   = data.azurerm_private_dns_zone.postgres_dns_zone.resource_group_name
   # private_dns_zone_name = data.azurerm_private_dns_zone.postgres_dns_zone.name
   resource_group_name   = azurerm_private_dns_zone.postgres_dns_zone.resource_group_name
@@ -16,7 +16,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "pe" {
 
 # Create PostgreSQL Public Flexible Server
 resource "azurerm_postgresql_flexible_server" "pe" {
-  name                = "${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}-postgresql-pe"
+  name                = "postgresql-pe-${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
 
@@ -38,13 +38,13 @@ resource "azurerm_postgresql_flexible_server" "pe" {
 
 # Create the Private Endpoint
 resource "azurerm_private_endpoint" "pe" {
-  name                = "${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}-pe"
+  name                = "pe-${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
   subnet_id           = azurerm_subnet.pe.id
 
   private_service_connection {
-    name                           = "${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}-psc"
+    name                           = "psc-${lower(replace(var.company, " ", "-"))}-${var.app_name}-${var.environment}"
     private_connection_resource_id = azurerm_postgresql_flexible_server.pe.id
     subresource_names              = ["postgresqlServer"]
     is_manual_connection           = false
@@ -61,7 +61,7 @@ resource "azurerm_private_endpoint" "pe" {
 
 # Create PostgreSQL Database
 resource "azurerm_postgresql_flexible_server_database" "pe" {
-  name      = "${var.app_name}-${var.environment}-db-pe"
+  name      = "db-pe-${var.app_name}-${var.environment}"
   server_id = azurerm_postgresql_flexible_server.pe.id
   charset   = var.postgres_database_charset
   collation = var.postgres_database_collation

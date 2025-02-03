@@ -1,0 +1,48 @@
+FROM postgres:16-alpine3.20
+
+# Install Bellsoft Liberica JDK 21
+RUN wget https://download.bell-sw.com/java/21.0.6+10/bellsoft-jdk21.0.6+10-linux-x64-musl.tar.gz && \
+    mkdir -p /opt/java && \
+    tar -xzf bellsoft-jdk21.0.6+10-linux-x64-musl.tar.gz -C /opt/java && \
+    rm bellsoft-jdk21.0.6+10-linux-x64-musl.tar.gz && \
+    ln -s /opt/java/jdk-21.0.6 /opt/java/current
+
+ENV PATH="/opt/java/current/bin:${PATH}"
+ENV JAVA_HOME="/opt/java/current"
+
+# Build arguments with default values
+ARG POSTGRES_DB=bravadb_catalog
+ARG POSTGRES_USER=user
+ARG POSTGRES_PASSWORD=password
+
+# Set environment variables
+ENV POSTGRES_DB=${POSTGRES_DB} \
+    POSTGRES_USER=${POSTGRES_USER} \
+    POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
+# Copy the application JAR
+ARG JAR_FILE=build/libs/*.jar
+COPY ${JAR_FILE} app.jar
+
+# Create init-db script
+COPY <<EOF /docker-entrypoint-initdb.d/init-db.sh
+#!/bin/bash
+set -e
+
+until pg_isready -q -U ${POSTGRES_USER}
+do
+    echo "Waiting for PostgreSQL to start..."
+    sleep 1
+done
+
+echo "PostgreSQL started, running migrations..."
+java -jar /app.jar \
+    --spring.datasource.url=jdbc:postgresql:///${POSTGRES_DB} \
+    --spring.datasource.username=${POSTGRES_USER} \
+    --spring.datasource.password=${POSTGRES_PASSWORD} \
+    --spring.flyway.enabled=true
+EOF
+
+RUN chmod +x /docker-entrypoint-initdb.d/init-db.sh
+
+EXPOSE 5432

@@ -17,10 +17,10 @@ variable "azure_subscription_id" {
 #   description = "Azure Client Secret"
 # }
 
-# variable "azure_tenant_id" {
-#   type        = string
-#   description = "Azure Tenant ID"
-# }
+variable "azure_tenant_id" {
+  type        = string
+  description = "Azure Tenant ID"
+}
 
 ###########################
 ## Application Variables ##

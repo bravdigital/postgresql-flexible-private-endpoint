@@ -27,13 +27,29 @@ resource "azurerm_postgresql_flexible_server" "pe" {
 
   administrator_login    = var.postgres_user
   administrator_password = var.postgres_password
+  authentication {
+    active_directory_auth_enabled = true
+    password_auth_enabled         = true
+    tenant_id                     = var.azure_tenant_id
+  }
 
   storage_mb   = var.postgres_server_storage_mb
   storage_tier = var.postgres_server_storage_tier
 
-  zone = 2
+
+  zone = 1
 
   tags = var.tags
+}
+
+# AD Service Principal
+resource "azurerm_postgresql_flexible_server_active_directory_administrator" "pe" {
+  server_name         = azurerm_postgresql_flexible_server.pe.name
+  resource_group_name = azurerm_resource_group.this.name
+  tenant_id           = var.azure_tenant_id
+  object_id           = azuread_service_principal.postgres_sp.object_id
+  principal_name      = azuread_application.postgres_app.display_name
+  principal_type      = "ServicePrincipal"
 }
 
 # Create the Private Endpoint
